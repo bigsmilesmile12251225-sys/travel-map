@@ -1,0 +1,106 @@
+/* ============ デザイントークン(ライト/ダーク) ============ */
+:root {
+  color-scheme: light dark;
+  --bg: #f4f2ee;
+  --surface: #ffffff;
+  --surface-2: #f0ede7;
+  --text: #1d1f22;
+  --muted: #6a6f76;
+  --line: #e2ded6;
+  --accent: #1f7a5c;
+  --accent-text: #ffffff;
+  --warn: #b55d00;
+  --warn-bg: #fff3e0;
+  --ok: #1f7a5c;
+  --ok-bg: #e6f4ee;
+  --ng: #b3261e;
+  --ng-bg: #fdecea;
+  --shadow: 0 2px 10px rgba(0, 0, 0, .12);
+  --radius: 14px;
+  --tap: 48px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --surface: #1f2226;
+    --surface-2: #2a2e33;
+    --text: #eceae6;
+    --muted: #9aa0a7;
+    --line: #353a40;
+    --accent: #4cc497;
+    --accent-text: #0d2a1f;
+    --warn: #ffb35c;
+    --warn-bg: #3a2a14;
+    --ok: #6fd6ab;
+    --ok-bg: #18342a;
+    --ng: #ff8a80;
+    --ng-bg: #3d1c1a;
+    --shadow: 0 2px 12px rgba(0, 0, 0, .5);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+button, select, input { font: inherit; color: inherit; }
+
+/* ============ ボタン ============ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--tap); padding: 0 18px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); color: var(--text);
+  font-weight: 600; cursor: pointer; user-select: none;
+  -webkit-user-select: none; touch-action: manipulation;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.btn.icon { width: var(--tap); padding: 0; font-size: 22px; }
+.btn[disabled] { opacity: .5; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input[type=file] { position: absolute; inset: 0; opacity: 0; font-size: 100px; cursor: pointer; }
+
+select.field, input.field {
+  min-height: var(--tap); padding: 0 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+
+/* ============ 確認画面(段階1) ============ */
+.page { max-width: 980px; margin: 0 auto; padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(32px + var(--safe-bottom)) calc(16px + var(--safe-left)); }
+.page h1 { font-size: 24px; margin: 4px 0 4px; }
+.lead { color: var(--muted); margin: 0 0 16px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; align-items: center; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; }
+.panel h2 { font-size: 17px; margin: 0 0 8px; }
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.settings-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
+.settings-grid .field { color: var(--text); width: 100%; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--surface-2); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.ng { background: var(--ng-bg); color: var(--ng); }
+
+.check-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+.check-card { display: grid; grid-template-columns: 96px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.check-card img, .check-card .noimg { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; text-align: center; }
+.check-card .name { font-weight: 700; word-break: break-all; }
+.check-card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: 13px; }
+.check-card dt { color: var(--muted); }
+.check-card dd { margin: 0; word-break: break-all; }
+.progress { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); width: 0; transition: width .2s; }
