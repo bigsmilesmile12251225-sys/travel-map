@@ -1,25 +1,32 @@
-// 段階1: 写真の読み取り確認
-import { $, h, fmtOffset, loadSettings, saveSettings } from './util.js';
+// アプリ全体の制御
+import { $, h, dayKey, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
 import { loadPhotos, computePhotoTime } from './photos.js';
+import { loadGpxFiles, buildDays } from './gpx.js';
 import { renderCheckList } from './check.js';
+import { TripMap, photoPos } from './map.js';
+import { PhotoViewer } from './viewer.js';
 
-const state = { photos: [], settings: loadSettings() };
+const state = {
+  tracks: [],
+  photos: [],
+  days: [],
+  settings: loadSettings(),
+  tz: 'device', // 解決済みの表示タイムゾーン
+};
 
-/** タイムゾーン選択肢 */
-export function fillTzSelect(sel, value) {
-  const offs = [];
-  for (let m = -12 * 60; m <= 14 * 60; m += 60) offs.push(m);
-  offs.push(-570, -210, 210, 270, 330, 345, 390, 525, 570, 630, 765);
-  offs.sort((a, b) => a - b);
-  sel.replaceChildren(
-    h('option', { value: 'auto' }, '自動(写真の時差情報 → 端末)'),
-    h('option', { value: 'device' }, `端末のタイムゾーン(${fmtOffset(-new Date().getTimezoneOffset())})`),
-    ...offs.map((m) => h('option', { value: String(m) }, fmtOffset(m))),
-  );
-  sel.value = String(value);
-}
+const tripMap = new TripMap($('#map'), {
+  onPhotoTap: (p) => viewer.open(mappedPhotos(), p),
+});
+const viewer = new PhotoViewer({
+  getTz: () => state.tz,
+  onShowOnMap: (p) => tripMap.focusPhoto(p),
+});
 
-/** 'auto' を実際の値に解決: 写真の時差情報で最も多いもの、なければ端末 */
+const mappedPhotos = () => state.photos.filter((p) => photoPos(p));
+
+// ------------------------------------------------------------
+// 再計算と描画
+// ------------------------------------------------------------
 function resolveTz() {
   const t = state.settings.tz;
   if (t !== 'auto') return t === 'device' ? 'device' : Number(t);
@@ -32,39 +39,147 @@ function resolveTz() {
 }
 
 function recompute() {
-  // 1回目: 時差情報を確定させる(auto解決のため)
   for (const p of state.photos) computePhotoTime(p, state.settings, 'device');
-  const tz = resolveTz();
-  for (const p of state.photos) computePhotoTime(p, state.settings, tz);
-  renderCheckList($('#result'), state.photos, tz);
+  state.tz = resolveTz();
+  for (const p of state.photos) computePhotoTime(p, state.settings, state.tz);
+  state.photos.sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
+  state.days = buildDays(state.tracks, state.tz);
+  const colorOf = new Map(state.days.map((d) => [d.key, d.color]));
+  for (const p of state.photos) p.color = (p.time != null && colorOf.get(dayKey(p.time, state.tz))) || '#666';
 }
 
-async function addFiles(files) {
-  if (!files || !files.length) return;
-  const bar = $('#progress');
-  bar.hidden = false;
-  const photos = await loadPhotos(files, (done, total) => {
-    bar.firstElementChild.style.width = `${(done / total) * 100}%`;
-  });
-  bar.hidden = true;
-  state.photos.push(...photos);
-  state.photos.sort((a, b) => (a.dateStr || '').localeCompare(b.dateStr || ''));
-  recompute();
+function render({ fit = false } = {}) {
+  tripMap.render(state.days, state.photos);
+  if (fit) tripMap.fitAll(state.days, state.photos);
+  const empty = !state.tracks.length && !state.photos.length;
+  $('#welcome').hidden = !empty;
+  renderLoadedList();
+  renderCheckList($('#check'), state.photos, state.tz);
 }
 
-for (const id of ['#pick-photos', '#pick-files']) {
-  $(id).addEventListener('change', async (e) => {
-    await addFiles(e.target.files);
-    e.target.value = '';
-  });
-}
-$('#clear').addEventListener('click', () => {
-  for (const p of state.photos) { URL.revokeObjectURL(p.fullUrl); URL.revokeObjectURL(p.thumbUrl); }
-  state.photos = [];
+function update(opts) {
   recompute();
+  render(opts);
+}
+
+// ------------------------------------------------------------
+// 読み込み
+// ------------------------------------------------------------
+const isGpx = (f) => /\.gpx$/i.test(f.name) || /gpx/i.test(f.type);
+const isImage = (f) => /^image\//.test(f.type) || /\.(jpe?g|heic|heif|png|tiff?)$/i.test(f.name);
+
+async function addFiles(fileList) {
+  const files = [...fileList];
+  if (!files.length) return;
+  closeDialogs();
+  const gpx = files.filter(isGpx);
+  const imgs = files.filter((f) => !isGpx(f) && isImage(f));
+  const other = files.filter((f) => !isGpx(f) && !isImage(f));
+  const msgs = [];
+
+  if (gpx.length) {
+    toast(`GPXを読み込み中…`);
+    const { tracks, errors } = await loadGpxFiles(gpx);
+    state.tracks.push(...tracks);
+    msgs.push(...errors);
+  }
+  if (imgs.length) {
+    const photos = await loadPhotos(imgs, (done, total) => toast(`写真を読み込み中… ${done}/${total}`));
+    state.photos.push(...photos);
+    const noPos = photos.filter((p) => !p.hasGps).length;
+    if (noPos) msgs.push(`${photos.length}枚中${noPos}枚に位置情報がありません(設定画面で詳細を確認できます)`);
+  }
+  if (other.length) msgs.push(`対応していないファイル: ${other.map((f) => f.name).join(', ')}`);
+
+  update({ fit: true });
+  const route = state.days.reduce((s, d) => s + d.dist, 0);
+  toast(msgs.length ? msgs.join('\n') : `読み込みました(ルート ${fmtDist(route)}・写真 ${state.photos.length}枚)`, msgs.length ? 6000 : 2500);
+}
+
+document.querySelectorAll('input[type=file][data-pick]').forEach((inp) => {
+  inp.addEventListener('change', async () => {
+    const files = [...inp.files];
+    inp.value = '';
+    await addFiles(files);
+  });
 });
+
+function renderLoadedList() {
+  const ul = $('#loaded-list');
+  ul.replaceChildren(
+    ...state.tracks.map((t) => h('li', {}, `🗺️ ${t.fileName || t.name}(${t.segments.reduce((s, x) => s + x.length, 0)}点)`)),
+    state.photos.length ? h('li', {}, `🖼️ 写真 ${state.photos.length}枚(位置情報あり ${state.photos.filter((p) => p.hasGps).length}枚)`) : null,
+  );
+  if (!ul.children.length) ul.append(h('li', { class: 'hint' }, 'まだ何も読み込まれていません'));
+  $('#btn-clear').hidden = !ul.querySelector('li:not(.hint)');
+}
+
+$('#btn-clear').addEventListener('click', () => {
+  if (!confirm('読み込んだGPXと写真をすべて消去しますか?')) return;
+  for (const p of state.photos) { URL.revokeObjectURL(p.fullUrl); if (p.thumbUrl) URL.revokeObjectURL(p.thumbUrl); }
+  state.photos = [];
+  state.tracks = [];
+  closeDialogs();
+  update();
+});
+
+// ------------------------------------------------------------
+// ダイアログ・設定
+// ------------------------------------------------------------
+function openDialog(id) {
+  const d = $(id);
+  if (!d.open) d.showModal();
+}
+function closeDialogs() {
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+}
+document.querySelectorAll('dialog').forEach((d) => {
+  d.addEventListener('click', (e) => {
+    // 背景タップで閉じる
+    if (e.target === d || e.target.closest('[data-close]')) d.close();
+  });
+});
+$('#btn-load').addEventListener('click', () => openDialog('#load-dialog'));
+$('#btn-settings').addEventListener('click', () => openDialog('#settings-dialog'));
+$('#btn-fit').addEventListener('click', () => tripMap.fitAll(state.days, state.photos));
+
+function fillTzSelect(sel, value) {
+  const offs = [];
+  for (let m = -12 * 60; m <= 14 * 60; m += 60) offs.push(m);
+  offs.push(-570, -210, 210, 270, 330, 345, 390, 525, 570, 630, 765);
+  offs.sort((a, b) => a - b);
+  sel.replaceChildren(
+    h('option', { value: 'auto' }, '自動(写真の時差情報 → 端末)'),
+    h('option', { value: 'device' }, `端末のタイムゾーン(${fmtOffset(-new Date().getTimezoneOffset())})`),
+    ...offs.map((m) => h('option', { value: String(m) }, fmtOffset(m))),
+  );
+  sel.value = String(value);
+  if (!sel.value) sel.value = 'auto';
+}
 fillTzSelect($('#tz'), state.settings.tz);
-$('#tz').addEventListener('change', (e) => { state.settings.tz = e.target.value; saveSettings(state.settings); recompute(); });
+$('#tz').addEventListener('change', (e) => {
+  state.settings.tz = e.target.value;
+  saveSettings(state.settings);
+  update();
+});
 $('#shift').value = state.settings.shiftMin;
-$('#shift').addEventListener('change', (e) => { state.settings.shiftMin = Number(e.target.value) || 0; saveSettings(state.settings); recompute(); });
-recompute();
+$('#shift').addEventListener('change', (e) => {
+  state.settings.shiftMin = Number(e.target.value) || 0;
+  saveSettings(state.settings);
+  update();
+});
+
+// ------------------------------------------------------------
+// 通知
+// ------------------------------------------------------------
+let toastTimer = null;
+function toast(msg, ms = 0) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  if (ms) toastTimer = setTimeout(() => { el.hidden = true; }, ms);
+}
+$('#toast').addEventListener('click', () => { $('#toast').hidden = true; });
+
+update();
