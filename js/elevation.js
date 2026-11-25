@@ -1,6 +1,6 @@
 // 標高グラフ(SVGで描画)。横軸は移動距離、縦軸は標高。
 // グラフをなぞると地図上に現在地のカーソルを表示する。
-import { h, fill, fmtTime, fmtDist, haversine } from './util.js?v=202611251008';
+import { h, fill, fmtTime, fmtDist, haversine } from './util.js?v=202611251019';
 
 const NS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}) => {

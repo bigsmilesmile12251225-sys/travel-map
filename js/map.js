@@ -1,5 +1,5 @@
 // 地図(Leaflet + OpenStreetMap)。L は index.html で読み込んだグローバル。
-import { escapeHtml } from './util.js?v=202611251008';
+import { escapeHtml } from './util.js?v=202611251019';
 
 const L = window.L;
 
@@ -50,6 +50,14 @@ export class TripMap {
         if (ll.length < 2) continue;
         L.polyline(ll, { color: '#fff', weight: 8, opacity: 0.85, interactive: false, className: 'route-casing' }).addTo(this.routes);
         L.polyline(ll, { color: d.color, weight: 4.5, opacity: 1, interactive: false }).addTo(this.routes);
+        // 手で差し替えた区間は白い破線を重ねて区別する
+        let run = [];
+        const flush = () => { if (run.length > 1) L.polyline(run, { color: '#fff', weight: 2, dashArray: '4 8', opacity: 0.95, interactive: false }).addTo(this.routes); run = []; };
+        seg.forEach((p, i) => {
+          if (p.edited) { if (!run.length && i > 0) run.push([seg[i - 1].lat, seg[i - 1].lon]); run.push([p.lat, p.lon]); }
+          else if (run.length) { run.push([p.lat, p.lon]); flush(); }
+        });
+        flush();
       }
       // 日ごとの出発・到着点
       const segs = d.segments.filter((s) => s.length);

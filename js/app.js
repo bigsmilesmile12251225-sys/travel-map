@@ -1,16 +1,17 @@
 // アプリ全体の制御
-import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611251008';
-import { loadPhotos, computePhotoTime } from './photos.js?v=202611251008';
-import { loadGpxFiles, buildDays } from './gpx.js?v=202611251008';
-import { renderCheckList } from './check.js?v=202611251008';
-import { TripMap, photoPos } from './map.js?v=202611251008';
-import { PhotoViewer } from './viewer.js?v=202611251008';
-import { estimatePhotos } from './estimate.js?v=202611251008';
-import { Panel } from './panel.js?v=202611251008';
-import { ElevationChart } from './elevation.js?v=202611251008';
-import { Replay } from './replay.js?v=202611251008';
-import { PlaceEditor, applyOverrides } from './place-edit.js?v=202611251008';
-import { PlaceResolver } from './places.js?v=202611251008';
+import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611251019';
+import { loadPhotos, computePhotoTime } from './photos.js?v=202611251019';
+import { loadGpxFiles, buildDays } from './gpx.js?v=202611251019';
+import { renderCheckList } from './check.js?v=202611251019';
+import { TripMap, photoPos } from './map.js?v=202611251019';
+import { PhotoViewer } from './viewer.js?v=202611251019';
+import { estimatePhotos } from './estimate.js?v=202611251019';
+import { Panel } from './panel.js?v=202611251019';
+import { ElevationChart } from './elevation.js?v=202611251019';
+import { Replay } from './replay.js?v=202611251019';
+import { PlaceEditor, applyOverrides } from './place-edit.js?v=202611251019';
+import { RouteEditor, applyRouteEdits } from './route-edit.js?v=202611251019';
+import { PlaceResolver } from './places.js?v=202611251019';
 
 const state = {
   tracks: [],
@@ -45,6 +46,9 @@ const panel = new Panel($('#panel'), {
   },
   onResize: () => { tripMap.invalidate(); elevation.redraw(); },
   renderElevation: () => elevation.element(state),
+  onRouteEdit: () => routeEditor.start(),
+  routeEdits: () => routeEditor.list().map((e) => ({ id: e.id, applied: state.appliedEdits?.has(e.id), ...routeEditor.describe(e, state.tz) })),
+  onRemoveEdit: (id) => { if (confirm('このルートの修正を元に戻しますか?')) routeEditor.remove(id); },
 });
 const replay = new Replay({
   tripMap,
@@ -88,6 +92,11 @@ const placeEditor = new PlaceEditor({
     replay.refreshCard();
   },
 });
+const routeEditor = new RouteEditor({
+  tripMap,
+  getState: () => state,
+  onChange: () => update(),
+});
 const elevation = new ElevationChart({
   onCursor: (pt, color) => tripMap.setCursor(pt, color),
 });
@@ -111,8 +120,12 @@ function recompute() {
   state.tz = resolveTz();
   for (const p of state.photos) computePhotoTime(p, state.settings, state.tz);
   state.photos.sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
-  state.days = buildDays(state.tracks, state.tz);
-  estimatePhotos(state.photos, state.tracks);
+  // ルートの差し替え(手で修正した区間)を反映したトラックで集計する
+  const { tracks: eff, applied } = applyRouteEdits(state.tracks, routeEditor.list());
+  state.effTracks = eff;
+  state.appliedEdits = applied;
+  state.days = buildDays(eff, state.tz);
+  estimatePhotos(state.photos, eff);
   places.request(state.photos, state.settings.placeNames);
   applyOverrides(state.photos);
   const colorOf = new Map(state.days.map((d) => [d.key, d.color]));

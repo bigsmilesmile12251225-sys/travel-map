@@ -1,6 +1,6 @@
 // 写真の拡大表示(全画面)。左右スワイプ・ボタンで前後の写真へ。
-import { h, fill, fmtDateTime } from './util.js?v=202611251008';
-import { placeHeading } from './place-view.js?v=202611251008';
+import { h, fill, fmtDateTime } from './util.js?v=202611251019';
+import { placeHeading } from './place-view.js?v=202611251019';
 
 export class PhotoViewer {
   constructor({ getTz, onShowOnMap, onEditPlace }) {

@@ -482,3 +482,28 @@ dialog.place-dialog { z-index: 4000; }
 .seg-btn { min-height: 40px; padding: 0 14px; border: none; border-radius: 9px; background: none; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted); }
 .seg-btn.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .replay-options .hint { margin: 0; }
+
+/* ============ ルートの修正 ============ */
+.app.editing .topbar, .app.editing .panel-side, .app.editing .leaflet-top { display: none; }
+.edit-bar {
+  position: absolute; z-index: 1200; left: 50%; transform: translateX(-50%);
+  bottom: calc(14px + var(--safe-bottom)); width: min(680px, calc(100% - 20px - var(--safe-left) - var(--safe-right)));
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-radius: 18px; box-shadow: var(--shadow); padding: 14px;
+}
+.edit-msg { font-size: 16px; margin-bottom: 10px; }
+.edit-msg .hint { font-size: 13px; }
+.edit-warn { color: var(--ng); font-weight: 700; font-size: 14px; margin-top: 4px; }
+.edit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.edit-mark-wrap { background: none; border: none; }
+.edit-mark {
+  width: 34px; height: 34px; border-radius: 50%; background: var(--c); color: #fff; border: 3px solid #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.route-edits { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
+.route-edits .hint { margin: 0; }
+.route-edit-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; background: var(--surface-2); border-radius: 10px; font-size: 14px; }
+.route-edit-item.off { opacity: .7; }
+.ng-text { color: var(--ng); }
+.route-edit-item .btn { flex: none; white-space: nowrap; }

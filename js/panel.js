@@ -1,8 +1,8 @@
 // 横(iPad)/下(iPhone)のパネル: サマリーとタイムライン
-import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611251008';
-import { photoPos } from './map.js?v=202611251008';
-import { placeOf } from './place-edit.js?v=202611251008';
-import { METHOD_LABEL } from './estimate.js?v=202611251008';
+import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611251019';
+import { photoPos } from './map.js?v=202611251019';
+import { placeOf } from './place-edit.js?v=202611251019';
+import { METHOD_LABEL } from './estimate.js?v=202611251019';
 
 /** 'YYYY-MM-DD' → '10/1(木)' */
 function keyLabel(key) {
@@ -191,7 +191,26 @@ export class Panel {
       );
     }
     if (!groups.length) frag.append(h('p', { class: 'hint pad' }, 'GPXや写真を読み込むと、ここに日ごとの記録が表示されます。'));
+    if (s.days.length && this.handlers.onRouteEdit) frag.append(this.renderRouteEdits());
     return frag;
+  }
+
+  /** ルートの修正(区間の差し替え)の一覧と追加ボタン */
+  renderRouteEdits() {
+    const edits = this.handlers.routeEdits();
+    return h('section', { class: 'route-edits' },
+      h('div', { class: 'ele-title' }, 'ルートの修正'),
+      h('p', { class: 'hint' }, 'GPSがうまく記録できなかった区間(新幹線・トンネルなど)を、別の日に同じ場所を通ったときのルートで差し替えられます。'),
+      ...edits.map((e) => h('div', { class: 'route-edit-item' + (e.applied ? '' : ' off') },
+        h('div', {},
+          h('div', {}, h('strong', {}, e.target)),
+          h('div', { class: 'hint' }, `→ ${e.source} のルートで差し替え`),
+          e.applied ? null : h('div', { class: 'hint ng-text' }, '読み込んだGPXに該当する区間がないため、今は使われていません'),
+        ),
+        h('button', { type: 'button', class: 'btn', onclick: () => this.handlers.onRemoveEdit(e.id) }, '元に戻す'),
+      )),
+      h('button', { type: 'button', class: 'btn primary', onclick: () => this.handlers.onRouteEdit() }, '✎ ルートの一部を差し替える'),
+    );
   }
 
   renderTimeline(groups) {
