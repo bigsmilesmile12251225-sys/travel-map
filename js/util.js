@@ -9,7 +9,7 @@ export function h(tag, attrs = {}, ...children) {
     if (v == null || v === false) continue;
     if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
     else if (k === 'class') el.className = v;
-    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k === 'style' && typeof v === 'object') for (const [sk, sv] of Object.entries(v)) el.style.setProperty(sk.startsWith('--') ? sk : sk.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()), sv);
     else if (k === 'dataset') Object.assign(el.dataset, v);
     else el.setAttribute(k, v === true ? '' : v);
   }

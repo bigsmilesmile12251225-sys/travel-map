@@ -1,10 +1,12 @@
 // アプリ全体の制御
-import { $, h, dayKey, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
+import { $, h, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
 import { loadPhotos, computePhotoTime } from './photos.js';
 import { loadGpxFiles, buildDays } from './gpx.js';
 import { renderCheckList } from './check.js';
-import { TripMap, photoPos } from './map.js';
+import { TripMap } from './map.js';
 import { PhotoViewer } from './viewer.js';
+import { estimatePhotos } from './estimate.js';
+import { Panel } from './panel.js';
 
 const state = {
   tracks: [],
@@ -15,14 +17,22 @@ const state = {
 };
 
 const tripMap = new TripMap($('#map'), {
-  onPhotoTap: (p) => viewer.open(mappedPhotos(), p),
+  onPhotoTap: (p) => { viewer.open(state.photos, p); panel.reveal(p); },
 });
 const viewer = new PhotoViewer({
   getTz: () => state.tz,
-  onShowOnMap: (p) => tripMap.focusPhoto(p),
+  onShowOnMap: (p) => { panel.ensureOpen(); tripMap.focusPhoto(p); panel.reveal(p); },
 });
-
-const mappedPhotos = () => state.photos.filter((p) => photoPos(p));
+const panel = new Panel($('#panel'), {
+  onPhoto: (p) => tripMap.focusPhoto(p),
+  onPhotoOpen: (p) => viewer.open(state.photos, p),
+  onPoint: (pt) => tripMap.focusPoint(pt.lat, pt.lon),
+  onDay: (g) => {
+    if (g.day) tripMap.fitDay(g.day);
+    else tripMap.fitAll([], g.photos);
+  },
+  onResize: () => tripMap.invalidate(),
+});
 
 // ------------------------------------------------------------
 // 再計算と描画
@@ -44,6 +54,7 @@ function recompute() {
   for (const p of state.photos) computePhotoTime(p, state.settings, state.tz);
   state.photos.sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
   state.days = buildDays(state.tracks, state.tz);
+  estimatePhotos(state.photos, state.tracks);
   const colorOf = new Map(state.days.map((d) => [d.key, d.color]));
   for (const p of state.photos) p.color = (p.time != null && colorOf.get(dayKey(p.time, state.tz))) || '#666';
 }
@@ -53,8 +64,23 @@ function render({ fit = false } = {}) {
   if (fit) tripMap.fitAll(state.days, state.photos);
   const empty = !state.tracks.length && !state.photos.length;
   $('#welcome').hidden = !empty;
+  const wasHidden = $('#panel').hidden;
+  $('#panel').hidden = empty;
+  panel.update(state);
+  if (wasHidden !== empty) { panel.setSnap(panel.snap); tripMap.invalidate(); }
+  $('#trip-title').textContent = tripTitle();
   renderLoadedList();
   renderCheckList($('#check'), state.photos, state.tz);
+}
+
+function tripTitle() {
+  const ts = [
+    ...state.days.flatMap((d) => [d.start, d.end]),
+    ...state.photos.map((p) => p.time),
+  ].filter((x) => x != null);
+  if (!ts.length) return '旅の地図';
+  const a = fmtDate(Math.min(...ts), state.tz), b = fmtDate(Math.max(...ts), state.tz);
+  return a === b ? `${a}の旅` : `${a}〜${b}の旅`;
 }
 
 function update(opts) {
@@ -67,6 +93,8 @@ function update(opts) {
 // ------------------------------------------------------------
 const isGpx = (f) => /\.gpx$/i.test(f.name) || /gpx/i.test(f.type);
 const isImage = (f) => /^image\//.test(f.type) || /\.(jpe?g|heic|heif|png|tiff?)$/i.test(f.name);
+
+let pendingPhotoReport = null;
 
 async function addFiles(fileList) {
   const files = [...fileList];
@@ -86,12 +114,24 @@ async function addFiles(fileList) {
   if (imgs.length) {
     const photos = await loadPhotos(imgs, (done, total) => toast(`写真を読み込み中… ${done}/${total}`));
     state.photos.push(...photos);
-    const noPos = photos.filter((p) => !p.hasGps).length;
-    if (noPos) msgs.push(`${photos.length}枚中${noPos}枚に位置情報がありません(設定画面で詳細を確認できます)`);
+    pendingPhotoReport = photos;
   }
   if (other.length) msgs.push(`対応していないファイル: ${other.map((f) => f.name).join(', ')}`);
 
-  update({ fit: true });
+  update();
+  if (pendingPhotoReport) {
+    const ps = pendingPhotoReport;
+    pendingPhotoReport = null;
+    const noGps = ps.filter((p) => !p.hasGps);
+    const est = noGps.filter((p) => p.est).length;
+    if (noGps.length) {
+      msgs.push(`写真${ps.length}枚中${noGps.length}枚に位置情報がありません。`
+        + (est ? `うち${est}枚はルートの時刻から位置を推定しました。` : '')
+        + (noGps.length - est ? `${noGps.length - est}枚は地図に表示できません。` : '')
+        + '(詳細は設定画面)');
+    }
+  }
+  if (state.tracks.length || state.photos.length) setTimeout(() => tripMap.fitAll(state.days, state.photos), 300);
   const route = state.days.reduce((s, d) => s + d.dist, 0);
   toast(msgs.length ? msgs.join('\n') : `読み込みました(ルート ${fmtDist(route)}・写真 ${state.photos.length}枚)`, msgs.length ? 6000 : 2500);
 }

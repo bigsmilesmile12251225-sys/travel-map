@@ -232,3 +232,102 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 .check-card dd { margin: 0; word-break: break-all; }
 .progress { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
 .progress > div { height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+
+/* ============ パネル(iPad: 右側 / iPhone: 下のシート) ============ */
+.panel-side {
+  position: relative; z-index: 1001; display: flex; flex-direction: column;
+  width: 380px; flex: none; background: var(--surface); border-left: 1px solid var(--line);
+  padding-right: var(--safe-right);
+}
+.panel-side[hidden] { display: none; }
+.sheet-handle { display: none; }
+.panel-head { padding: calc(12px + var(--safe-top)) 14px 0; border-bottom: 1px solid var(--line); flex: none; }
+.panel-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: calc(16px + var(--safe-bottom)); }
+
+.stats { display: grid; grid-template-columns: 1.2fr .8fr 1fr; gap: 8px; }
+.stat { background: var(--surface-2); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+.stat-label { font-size: 12px; color: var(--muted); }
+.stat-value { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.tabs { display: flex; gap: 4px; margin-top: 10px; }
+.tab {
+  flex: 1; min-height: 44px; border: none; background: none; font-weight: 700; color: var(--muted);
+  border-bottom: 3px solid transparent; cursor: pointer;
+}
+.tab.on { color: var(--text); border-bottom-color: var(--accent); }
+
+.pad { padding: 16px; }
+.day-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 0 2px var(--surface); }
+
+/* タイムライン */
+.timeline { padding: 0 0 8px; }
+.tl-day {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-weight: 800; background: color-mix(in srgb, var(--surface) 94%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+.tl-day-dist { margin-left: auto; font-weight: 600; color: var(--muted); font-size: 14px; }
+.tl-item { position: relative; display: flex; align-items: center; padding-right: 8px; }
+.tl-item::before { /* 縦線 */
+  content: ""; position: absolute; left: 66px; top: 0; bottom: 0; width: 3px; background: var(--c); opacity: .35;
+}
+.tl-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 64px;
+  padding: 6px 6px 6px 14px; border: none; background: none; text-align: left; cursor: pointer;
+}
+.tl-main:active { background: var(--surface-2); }
+.tl-item.hl { background: color-mix(in srgb, var(--accent) 16%, transparent); transition: background .3s; }
+.tl-time { width: 44px; flex: none; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; }
+.tl-thumb {
+  position: relative; z-index: 1; width: 52px; height: 52px; flex: none; border-radius: 10px; object-fit: cover;
+  border: 2.5px solid var(--c); background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.tl-thumb.est { border-style: dashed; }
+.tl-mark { position: relative; z-index: 1; width: 52px; flex: none; display: flex; justify-content: center; }
+.tl-mark::after { content: ""; width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--c); background: var(--surface); }
+.tl-mark.start::after { background: var(--c); border-color: var(--surface); box-shadow: 0 0 0 2px var(--c); }
+.tl-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tl-name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-sub { font-size: 12px; color: var(--muted); }
+.tl-item.event .tl-name { color: var(--muted); font-weight: 600; }
+.tl-open { flex: none; width: 44px; min-height: 44px; font-size: 18px; border-color: transparent; background: var(--surface-2); }
+.tag { align-self: flex-start; font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 6px; }
+.tag.est { color: var(--warn); background: var(--warn-bg); border: 1px dashed var(--warn); }
+.tag.ng { color: var(--ng); background: var(--ng-bg); }
+.tl-item.nopos .tl-thumb { opacity: .6; }
+
+/* サマリー */
+.summary { padding: 12px 14px; display: grid; gap: 10px; }
+.summary-period { display: grid; gap: 2px; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.summary-period .label { display: inline-block; width: 4em; color: var(--muted); font-size: 13px; }
+.day-card {
+  display: block; width: 100%; text-align: left; cursor: pointer; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--line); border-left: 6px solid var(--c); background: var(--surface);
+}
+.day-card:active { background: var(--surface-2); }
+.day-card-head { display: flex; align-items: center; gap: 8px; }
+.day-dist { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+.day-card-row { font-size: 14px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* iPhone(縦長・幅が狭い画面): 地図の下にシート */
+@media (max-width: 699px) {
+  .app { flex-direction: column; }
+  .panel-side {
+    width: 100%; height: 160px; border-left: none; border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0; margin-top: -18px; box-shadow: 0 -4px 16px rgba(0,0,0,.12);
+    transition: height .25s ease; padding-left: var(--safe-left);
+  }
+  .panel-side.dragging { transition: none; }
+  .sheet-handle {
+    display: flex; justify-content: center; align-items: center; width: 100%; height: 22px; flex: none;
+    border: none; background: none; padding: 0; touch-action: none; cursor: grab;
+  }
+  .sheet-handle span { width: 44px; height: 5px; border-radius: 3px; background: var(--line); }
+  .panel-head { padding-top: 0; touch-action: none; }
+  .stat-value { font-size: 18px; }
+  .brand { font-size: 15px; padding: 10px 12px; }
+  .toast { bottom: 12px; }
+  .leaflet-bottom { margin-bottom: 18px; }
+}
