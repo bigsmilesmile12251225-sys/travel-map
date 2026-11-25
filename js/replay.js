@@ -1,7 +1,7 @@
 // 旅の再生: ルートを時間順にたどり、撮影地点で写真を表示する
-import { h, fill, fmtTime, fmtDate, fmtDist, haversine, dayKey } from './util.js?v=202611251005';
-import { photoPos, pinIcon } from './map.js?v=202611251005';
-import { placeHeading } from './place-view.js?v=202611251005';
+import { h, fill, fmtTime, fmtDate, fmtDist, haversine, dayKey } from './util.js?v=202611251008';
+import { photoPos, pinIcon } from './map.js?v=202611251008';
+import { placeHeading } from './place-view.js?v=202611251008';
 
 const L = window.L;
 
@@ -9,13 +9,16 @@ const DAY_MS = 40000;          // ×1 のとき1日分を何ミリ秒で再生�
 const GAP_CAP = 3 * 60000;     // 記録の途切れ・長い休憩はこの長さに縮めて再生する
 const MAX_POINTS = 1500;       // 1日あたりの描画点数の上限(なめらかさと速さの両立)
 const TITLE_HOLD = 1800;       // 日付の見出しを表示する時間
-const PHOTO_HOLD = 2600;       // 写真を表示して止まる時間(×1 のとき)
+const PHOTO_HOLDS = { short: 1600, normal: 2600, long: 4500 }; // 写真を表示して止まる時間(×1 のとき)
+const SLOW_WINDOW = 2500;      // 「写真の前後はゆっくり」のとき、写真の前後この範囲(×1換算のミリ秒)で減速する
 const PHOTO_HOLD_MIN = 900;    // 写真が続くときの最短表示時間
 const FOLLOW_ZOOM = 15;
 const SPEEDS = [0.5, 1, 2, 4];
 
 export class Replay {
-  constructor({ tripMap, getState, onOpenPhoto, onStateChange }) {
+  constructor({ tripMap, getState, onOpenPhoto, onStateChange, getPrefs, setPrefs }) {
+    this.getPrefs = getPrefs;
+    this.setPrefs = setPrefs;
     this.tripMap = tripMap;
     this.map = tripMap.map;
     this.getState = getState;
@@ -38,9 +41,13 @@ export class Replay {
       this.label,
       h('div', { class: 'replay-controls' },
         this.playBtn, this.range, this.speedBtn, this.followBtn,
+        h('button', { type: 'button', class: 'btn icon replay-small', 'aria-label': '再生の設定', 'aria-expanded': 'false', onclick: (e) => this.toggleOptions(e.currentTarget) }, '⚙︎'),
         h('button', { type: 'button', class: 'btn icon replay-small', 'aria-label': '再生を終了', onclick: () => this.stop() }, '✕'),
       ),
     );
+    // 再生の設定(写真のところの速さ・写真の表示時間)
+    this.options = h('div', { class: 'replay-options', hidden: true });
+    this.bar.append(this.options);
     this.cardImg = h('img', { alt: '' });
     this.cardPlace = h('div', { class: 'replay-card-place' });
     this.cardCap = h('div', { class: 'replay-card-cap' });
@@ -95,6 +102,7 @@ export class Replay {
     }
     events.sort((a, b) => a.R - b.R || (b.type === 'day') - (a.type === 'day') || (a.p && b.p ? a.p.time - b.p.time : 0));
     this.events = events;
+    this.photoRs = events.filter((ev) => ev.type === 'photo').map((ev) => ev.R);
   }
 
   /** 実時刻 t → その日の「再生用の経過時間」 */
@@ -178,6 +186,7 @@ export class Replay {
     this.map.addLayer(this.tripMap.routes);
     this.map.addLayer(this.tripMap.cluster);
     this.bar.hidden = true;
+    this.options.hidden = true;
     this.card.hidden = true;
     this.title.hidden = true;
     document.getElementById('app').classList.remove('replaying');
@@ -207,6 +216,45 @@ export class Replay {
     this.playBtn.textContent = this.R >= this.total ? '↺' : '▶';
     this.playBtn.setAttribute('aria-label', this.R >= this.total ? '最初から再生' : '再生');
     cancelAnimationFrame(this.raf);
+  }
+
+  /** 再生の設定パネル */
+  toggleOptions(btn) {
+    const open = this.options.hidden;
+    this.options.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) this.renderOptions();
+  }
+
+  renderOptions() {
+    const pr = this.getPrefs();
+    const seg = (name, items, value) => h('div', { class: 'seg', role: 'radiogroup', 'aria-label': name },
+      ...items.map(([v, label]) => h('button', {
+        type: 'button', role: 'radio', 'aria-checked': String(v === value), class: 'seg-btn' + (v === value ? ' on' : ''),
+        onclick: () => { this.setPrefs({ [name]: v }); this.renderOptions(); },
+      }, label)));
+    fill(this.options,
+      h('div', { class: 'opt-row' },
+        h('div', { class: 'opt-label' }, '倍速のとき写真の前後は'),
+        seg('replaySlowPhotos', [[true, 'ゆっくりにする'], [false, '速度どおり']], pr.replaySlowPhotos)),
+      h('div', { class: 'opt-row' },
+        h('div', { class: 'opt-label' }, '写真の表示時間'),
+        seg('replayPhotoHold', [['short', '短め'], ['normal', '標準'], ['long', '長め']], pr.replayPhotoHold)),
+      h('p', { class: 'hint' }, '「ゆっくりにする」と、×2・×4 でも写真の手前で ×1 まで減速し、写真は ×1 と同じ時間だけ表示します。'),
+    );
+  }
+
+  /** 写真の前後で減速した、いまの再生速度 */
+  currentSpeed() {
+    if (this.speed <= 1 || !this.getPrefs().replaySlowPhotos || !this.photoRs.length) return this.speed;
+    // 最も近い写真までの距離(再生位置の差)
+    const rs = this.photoRs;
+    let lo = 0, hi = rs.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (rs[m] <= this.R) lo = m; else hi = m; }
+    const d = Math.min(Math.abs(rs[lo] - this.R), Math.abs(rs[hi] - this.R));
+    const x = Math.min(1, d / SLOW_WINDOW);
+    const ease = x * x * (3 - 2 * x); // なめらかに加減速
+    return 1 + (this.speed - 1) * ease;
   }
 
   cycleSpeed() {
@@ -249,7 +297,7 @@ export class Replay {
       this.card.hidden = true;
       this.title.hidden = true;
     }
-    let R = this.R + dt * this.speed;
+    let R = this.R + dt * this.currentSpeed();
     const ev = this.events[this.ei];
     if (ev && ev.R <= R) {
       R = ev.R;
@@ -302,7 +350,11 @@ export class Replay {
       // 次の写真がすぐ続くなら表示時間を短く
       const next = this.events[this.ei];
       const soon = next && next.type === 'photo' && next.R - ev.R < 400;
-      const hold = soon ? PHOTO_HOLD_MIN : Math.max(PHOTO_HOLD_MIN, PHOTO_HOLD / Math.sqrt(this.speed));
+      const pr = this.getPrefs();
+      const base = PHOTO_HOLDS[pr.replayPhotoHold] || PHOTO_HOLDS.normal;
+      // 「ゆっくり」なら倍速でも ×1 と同じ時間、そうでなければ速度に応じて短く
+      const full = pr.replaySlowPhotos ? base : base / Math.sqrt(Math.max(1, this.speed));
+      const hold = soon ? PHOTO_HOLD_MIN : Math.max(PHOTO_HOLD_MIN, full);
       this.holdUntil = now + hold;
     }
   }

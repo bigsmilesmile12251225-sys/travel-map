@@ -1,8 +1,8 @@
 // 横(iPad)/下(iPhone)のパネル: サマリーとタイムライン
-import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611251005';
-import { photoPos } from './map.js?v=202611251005';
-import { placeOf } from './place-edit.js?v=202611251005';
-import { METHOD_LABEL } from './estimate.js?v=202611251005';
+import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611251008';
+import { photoPos } from './map.js?v=202611251008';
+import { placeOf } from './place-edit.js?v=202611251008';
+import { METHOD_LABEL } from './estimate.js?v=202611251008';
 
 /** 'YYYY-MM-DD' → '10/1(木)' */
 function keyLabel(key) {

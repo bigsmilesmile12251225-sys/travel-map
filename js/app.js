@@ -1,16 +1,16 @@
 // アプリ全体の制御
-import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611251005';
-import { loadPhotos, computePhotoTime } from './photos.js?v=202611251005';
-import { loadGpxFiles, buildDays } from './gpx.js?v=202611251005';
-import { renderCheckList } from './check.js?v=202611251005';
-import { TripMap, photoPos } from './map.js?v=202611251005';
-import { PhotoViewer } from './viewer.js?v=202611251005';
-import { estimatePhotos } from './estimate.js?v=202611251005';
-import { Panel } from './panel.js?v=202611251005';
-import { ElevationChart } from './elevation.js?v=202611251005';
-import { Replay } from './replay.js?v=202611251005';
-import { PlaceEditor, applyOverrides } from './place-edit.js?v=202611251005';
-import { PlaceResolver } from './places.js?v=202611251005';
+import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611251008';
+import { loadPhotos, computePhotoTime } from './photos.js?v=202611251008';
+import { loadGpxFiles, buildDays } from './gpx.js?v=202611251008';
+import { renderCheckList } from './check.js?v=202611251008';
+import { TripMap, photoPos } from './map.js?v=202611251008';
+import { PhotoViewer } from './viewer.js?v=202611251008';
+import { estimatePhotos } from './estimate.js?v=202611251008';
+import { Panel } from './panel.js?v=202611251008';
+import { ElevationChart } from './elevation.js?v=202611251008';
+import { Replay } from './replay.js?v=202611251008';
+import { PlaceEditor, applyOverrides } from './place-edit.js?v=202611251008';
+import { PlaceResolver } from './places.js?v=202611251008';
 
 const state = {
   tracks: [],
@@ -50,6 +50,8 @@ const replay = new Replay({
   tripMap,
   getState: () => state,
   onOpenPhoto: (p) => viewer.open(state.photos, p),
+  getPrefs: () => state.settings,
+  setPrefs: (patch) => { Object.assign(state.settings, patch); saveSettings(state.settings); },
 });
 $('#btn-replay').addEventListener('click', () => replay.start());
 const places = new PlaceResolver({

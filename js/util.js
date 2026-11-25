@@ -119,7 +119,7 @@ export function fmtBytes(b) {
 // ---------------------------------------------------------------
 const KEY = 'travel-map-settings-v1';
 export function loadSettings() {
-  const def = { tz: 'auto', shiftMin: 0, placeNames: false };
+  const def = { tz: 'auto', shiftMin: 0, placeNames: false, replaySlowPhotos: true, replayPhotoHold: 'normal' };
   try {
     return { ...def, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
   } catch {

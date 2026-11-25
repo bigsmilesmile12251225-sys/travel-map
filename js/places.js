@@ -1,7 +1,7 @@
 // 撮影地点の地名・施設名の取得(設定でオンにしたときだけ)
 // OpenStreetMap の Nominatim に「緯度・経度」だけを送る。写真そのものは送らない。
 // 利用規約に従い、1秒に1件まで・結果はこの端末に保存して再利用する。
-import { photoPos } from './map.js?v=202611251005';
+import { photoPos } from './map.js?v=202611251008';
 
 const ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
 const INTERVAL = 1100;

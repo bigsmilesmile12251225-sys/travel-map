@@ -473,3 +473,12 @@ dialog.place-dialog { z-index: 4000; }
 .form-actions .btn.primary { min-width: 120px; }
 @media (max-width: 480px) { .viewer-bottom { flex-wrap: wrap; } }
 .form-actions .btn.primary { margin-left: auto; }
+
+/* 再生の設定 */
+.replay-options { border-top: 1px solid var(--line); margin-top: 10px; padding: 10px 4px 2px; display: grid; gap: 10px; }
+.opt-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.opt-label { font-weight: 700; font-size: 14px; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg-btn { min-height: 40px; padding: 0 14px; border: none; border-radius: 9px; background: none; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted); }
+.seg-btn.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.replay-options .hint { margin: 0; }

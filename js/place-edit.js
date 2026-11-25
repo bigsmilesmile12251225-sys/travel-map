@@ -1,7 +1,7 @@
 // 地名の手入力による修正。修正内容はこの端末に保存し、同じ写真を読み込み直しても反映する。
-import { h, fill } from './util.js?v=202611251005';
-import { photoPos } from './map.js?v=202611251005';
-import { keyOf } from './places.js?v=202611251005';
+import { h, fill } from './util.js?v=202611251008';
+import { photoPos } from './map.js?v=202611251008';
+import { keyOf } from './places.js?v=202611251008';
 
 const KEY = 'travel-map-place-overrides-v1';
 

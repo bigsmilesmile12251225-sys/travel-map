@@ -1,5 +1,5 @@
 // 写真の読み取り結果の確認画面(段階1。以降も「読み取り確認」として利用)
-import { h, fmtDateTime, fmtOffset, fmtBytes } from './util.js?v=202611251005';
+import { h, fmtDateTime, fmtOffset, fmtBytes } from './util.js?v=202611251008';
 
 export function renderCheckList(container, photos, tz) {
   container.replaceChildren();
