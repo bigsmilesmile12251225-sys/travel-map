@@ -1,5 +1,5 @@
 // 写真の撮影時刻とGPXの時刻を照合して位置を推定する
-import { haversine } from './util.js';
+import { haversine } from './util.js?v=202611250937';
 
 // しきい値
 const MAX_INTERP_GAP = 15 * 60000; // 前後の点の間隔がこれ以内なら直線補間

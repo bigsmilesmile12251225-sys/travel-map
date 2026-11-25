@@ -1,11 +1,11 @@
 // 撮影地点の地名・施設名の取得(設定でオンにしたときだけ)
 // OpenStreetMap の Nominatim に「緯度・経度」だけを送る。写真そのものは送らない。
 // 利用規約に従い、1秒に1件まで・結果はこの端末に保存して再利用する。
-import { photoPos } from './map.js';
+import { photoPos } from './map.js?v=202611250937';
 
 const ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
 const INTERVAL = 1100;
-const CACHE_KEY = 'travel-map-places-v1';
+const CACHE_KEY = 'travel-map-places-v2'; // v1 は失敗も保存していたので使わない
 const CACHE_MAX = 3000;
 
 // 約10m単位にまとめて、近い写真では同じ結果を使う
@@ -14,6 +14,7 @@ const keyOf = (lat, lon) => `${lat.toFixed(4)},${lon.toFixed(4)}`;
 let cache = new Map();
 try {
   cache = new Map(JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'));
+  localStorage.removeItem('travel-map-places-v1');
 } catch { /* 保存できない環境では毎回取得 */ }
 
 function saveCache() {
@@ -71,14 +72,18 @@ export class PlaceResolver {
       if (!keys.has(k)) { keys.add(k); this.queue.push({ k, lat: pos[0], lon: pos[1] }); }
     }
     this.photos = photos;
+    this.positioned = photos.filter((p) => photoPos(p)).length;
+    this.photoCount = photos.length;
     this.done = 0;
+    this.failed = 0;
+    this.lastError = '';
     this.total = this.queue.length;
     this.onUpdate(this.status());
     if (this.queue.length && !this.running) this.run();
   }
 
   status() {
-    return { enabled: this.enabled, done: this.done, total: this.total, running: this.queue.length > 0 };
+    return { enabled: this.enabled, done: this.done, failed: this.failed, total: this.total, running: this.queue.length > 0, lastError: this.lastError, positioned: this.positioned, photoCount: this.photoCount };
   }
 
   async run() {
@@ -89,24 +94,31 @@ export class PlaceResolver {
       let place = null, ok = false;
       try {
         const url = `${ENDPOINT}?format=jsonv2&lat=${job.lat.toFixed(6)}&lon=${job.lon.toFixed(6)}&zoom=18&namedetails=1&accept-language=ja`;
-        const res = await fetch(url, { headers: { Accept: 'application/json' }, referrerPolicy: 'strict-origin-when-cross-origin' });
-        if (res.ok) { place = toPlace(await res.json()); ok = true; }
-        else if (res.status === 429 || res.status >= 500) { await sleep(5000); }
-        else ok = true; // 見つからない等は空で確定
-      } catch {
-        await sleep(3000);
+        const res = await fetch(url);
+        if (res.ok) {
+          place = toPlace(await res.json());
+          ok = true; // 見つからなかった場合(place = null)も成功として扱う
+        } else {
+          this.lastError = `サーバーの応答 ${res.status}`;
+          if (res.status === 429 || res.status >= 500) await sleep(5000);
+        }
+      } catch (e) {
+        this.lastError = `通信できませんでした(${(e && e.message) || e})`;
+        await sleep(2000);
       }
       if (ok || ++fails >= 3) {
         this.queue.shift();
         fails = 0;
-        cache.set(job.k, place);
         this.done++;
+        if (ok) cache.set(job.k, place); // 失敗は保存しない(次回また取得する)
+        else this.failed++;
         for (const p of this.photos) if (p.placeKey === job.k) { p.place = place; p.placeState = ok ? 'done' : 'error'; }
-        if (this.done % 5 === 0 || !this.queue.length) saveCache();
+        if (ok && (this.done % 5 === 0 || !this.queue.length)) saveCache();
         this.onUpdate(this.status());
       }
       await sleep(INTERVAL);
     }
+    if (this.enabled) saveCache();
     this.running = false;
   }
 }

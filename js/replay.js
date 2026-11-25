@@ -1,7 +1,7 @@
 // 旅の再生: ルートを時間順にたどり、撮影地点で写真を表示する
-import { h, fill, fmtTime, fmtDate, fmtDist, haversine, dayKey } from './util.js';
-import { photoPos, pinIcon } from './map.js';
-import { placeHeading } from './place-view.js';
+import { h, fill, fmtTime, fmtDate, fmtDist, haversine, dayKey } from './util.js?v=202611250937';
+import { photoPos, pinIcon } from './map.js?v=202611250937';
+import { placeHeading } from './place-view.js?v=202611250937';
 
 const L = window.L;
 

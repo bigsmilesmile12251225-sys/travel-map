@@ -1,15 +1,15 @@
 // アプリ全体の制御
-import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
-import { loadPhotos, computePhotoTime } from './photos.js';
-import { loadGpxFiles, buildDays } from './gpx.js';
-import { renderCheckList } from './check.js';
-import { TripMap, photoPos } from './map.js';
-import { PhotoViewer } from './viewer.js';
-import { estimatePhotos } from './estimate.js';
-import { Panel } from './panel.js';
-import { ElevationChart } from './elevation.js';
-import { Replay } from './replay.js';
-import { PlaceResolver } from './places.js';
+import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611250937';
+import { loadPhotos, computePhotoTime } from './photos.js?v=202611250937';
+import { loadGpxFiles, buildDays } from './gpx.js?v=202611250937';
+import { renderCheckList } from './check.js?v=202611250937';
+import { TripMap, photoPos } from './map.js?v=202611250937';
+import { PhotoViewer } from './viewer.js?v=202611250937';
+import { estimatePhotos } from './estimate.js?v=202611250937';
+import { Panel } from './panel.js?v=202611250937';
+import { ElevationChart } from './elevation.js?v=202611250937';
+import { Replay } from './replay.js?v=202611250937';
+import { PlaceResolver } from './places.js?v=202611250937';
 
 const state = {
   tracks: [],
@@ -53,8 +53,18 @@ $('#btn-replay').addEventListener('click', () => replay.start());
 const places = new PlaceResolver({
   onUpdate: (st) => {
     const el = $('#place-status');
-    el.hidden = !st.enabled || !st.total;
-    el.textContent = st.running ? `地名を取得中… ${st.done} / ${st.total}` : `地名を取得しました(${st.total}地点)`;
+    el.hidden = !st.enabled || !st.photoCount;
+    el.classList.toggle('ng', !!st.failed || !st.positioned);
+    el.textContent = !st.positioned
+      ? '地図上の位置がわかる写真がないため、地名を調べられません(写真の位置情報か、時刻が合うGPXが必要です)。'
+      : !st.total
+        ? `保存済みの地名を表示しています(${st.positioned}枚)`
+        : st.running
+      ? `地名を取得中… ${st.done} / ${st.total}${st.failed ? `(失敗 ${st.failed})` : ''}`
+      : st.failed
+        ? `${st.total}地点中 ${st.failed}地点の地名を取得できませんでした。原因: ${st.lastError}`
+        : `地名を取得しました(${st.total}地点)`;
+    $('#place-retry').hidden = !(st.failed && !st.running);
     // 表示の更新はまとめて行う
     clearTimeout(placeTimer);
     placeTimer = setTimeout(() => {
@@ -246,6 +256,8 @@ $('#place-names').addEventListener('change', (e) => {
   places.request(state.photos, state.settings.placeNames);
   panel.update(state);
 });
+$('#app-version').textContent = new URL(import.meta.url).searchParams.get('v') || '開発版';
+$('#place-retry').addEventListener('click', () => places.request(state.photos, state.settings.placeNames));
 $('#shift').value = state.settings.shiftMin;
 $('#shift').addEventListener('change', (e) => {
   state.settings.shiftMin = Number(e.target.value) || 0;

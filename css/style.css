@@ -44,6 +44,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg);
@@ -455,3 +456,6 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 
 /* タイムライン */
 .tl-place { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#place-status.ng { color: var(--ng); font-weight: 700; }
+#place-retry { margin-top: 8px; }

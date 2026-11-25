@@ -1,5 +1,5 @@
 // 地名の見出し(写真カード・拡大表示で共通)
-import { h } from './util.js';
+import { h } from './util.js?v=202611250937';
 
 /** 地名の見出し要素。地名表示がオフ・位置不明なら null */
 export function placeHeading(p, cls) {

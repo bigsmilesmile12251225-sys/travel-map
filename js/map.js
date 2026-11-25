@@ -1,5 +1,5 @@
 // 地図(Leaflet + OpenStreetMap)。L は index.html で読み込んだグローバル。
-import { escapeHtml } from './util.js';
+import { escapeHtml } from './util.js?v=202611250937';
 
 const L = window.L;
 
