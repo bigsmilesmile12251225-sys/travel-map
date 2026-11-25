@@ -7,6 +7,13 @@
   <meta name="theme-color" content="#f4f2ee" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)">
   <title>旅の地図</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="旅の地図">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
@@ -98,8 +105,13 @@
           <span class="hint">カメラの時計がずれていた場合に。例: 5分遅れていたら 5。</span>
         </label>
       </div>
-      <h3>写真の読み取り結果</h3>
       <div id="check"></div>
+      <h3>このアプリについて</h3>
+      <p class="hint">
+        写真とGPXはこの端末のブラウザ内だけで処理し、外部のサーバーには送信しません(通信するのは地図画像とプログラムの読み込みだけです)。
+        読み込んだデータは保存されないため、ページを再読み込みすると消えます。
+        地図データ &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors。
+      </p>
     </div>
   </dialog>
 

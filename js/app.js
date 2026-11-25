@@ -7,6 +7,7 @@ import { TripMap } from './map.js';
 import { PhotoViewer } from './viewer.js';
 import { estimatePhotos } from './estimate.js';
 import { Panel } from './panel.js';
+import { ElevationChart } from './elevation.js';
 
 const state = {
   tracks: [],
@@ -31,7 +32,11 @@ const panel = new Panel($('#panel'), {
     if (g.day) tripMap.fitDay(g.day);
     else tripMap.fitAll([], g.photos);
   },
-  onResize: () => tripMap.invalidate(),
+  onResize: () => { tripMap.invalidate(); elevation.redraw(); },
+  renderElevation: () => elevation.element(state),
+});
+const elevation = new ElevationChart({
+  onCursor: (pt, color) => tripMap.setCursor(pt, color),
 });
 
 // ------------------------------------------------------------

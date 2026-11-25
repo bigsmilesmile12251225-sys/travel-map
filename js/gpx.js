@@ -57,7 +57,8 @@ export async function loadGpxFiles(files) {
 }
 
 /** 日ごとの色(地図上で見分けやすく、ライト/ダークどちらの地図でも見える色) */
-export const DAY_COLORS = ['#e03a3e', '#2f6fd6', '#f08c00', '#8e44ad', '#0b9a8d', '#d6336c', '#5c940d', '#1098ad'];
+// 色覚の多様性を考慮して隣り合う色の差が大きくなる順に並べている(色だけでなく「N日目」の表記も併記する)
+export const DAY_COLORS = ['#e03a3e', '#2f6fd6', '#f08c00', '#0b9a8d', '#8e44ad', '#5c940d', '#d6336c', '#1098ad'];
 
 /**
  * すべてのトラックを、表示タイムゾーンでの日付ごとにまとめる。
@@ -94,6 +95,14 @@ export function buildDays(tracks, tz) {
     d.segments.sort((a, b) => (a[0].t ?? 0) - (b[0].t ?? 0));
     for (const seg of d.segments) {
       d.points += seg.length;
+      // 累積標高: GPSの標高は揺れるため、5m以上の変化だけを数える
+      let ref = null;
+      for (const p of seg) {
+        if (p.ele == null) continue;
+        if (ref == null) { ref = p.ele; continue; }
+        const diff = p.ele - ref;
+        if (diff >= 5) { d.eleGain += diff; ref = p.ele; } else if (diff <= -5) { d.eleLoss -= diff; ref = p.ele; }
+      }
       for (let j = 0; j < seg.length; j++) {
         const p = seg[j];
         if (p.t != null && !p.carry) {

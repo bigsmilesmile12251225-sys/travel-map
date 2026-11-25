@@ -15,6 +15,7 @@ export class TripMap {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
     }).addTo(this.map);
 
+    this.map.createPane('cursor').style.zIndex = 650; // 写真ピンより手前
     this.routes = L.layerGroup().addTo(this.map);
     this.cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
@@ -123,7 +124,7 @@ export class TripMap {
   /** 位置を一瞬強調表示 */
   flash(latlng) {
     if (this.highlight) this.highlight.remove();
-    this.highlight = L.circleMarker(latlng, { radius: 30, color: '#ffb400', weight: 4, fill: false, className: 'flash-ring', interactive: false }).addTo(this.map);
+    this.highlight = L.circleMarker(latlng, { radius: 30, color: '#ffb400', weight: 4, fill: false, className: 'flash-ring', interactive: false, pane: 'cursor' }).addTo(this.map);
     const h = this.highlight;
     setTimeout(() => h.remove(), 1600);
   }
@@ -132,11 +133,13 @@ export class TripMap {
   setCursor(pt, color) {
     if (!pt) { if (this.cursor) { this.cursor.remove(); this.cursor = null; } return; }
     if (!this.cursor) {
-      this.cursor = L.circleMarker([pt.lat, pt.lon], { radius: 8, color: '#fff', weight: 3, fillColor: color, fillOpacity: 1, interactive: false }).addTo(this.map);
+      this.cursor = L.circleMarker([pt.lat, pt.lon], { radius: 9, color: '#fff', weight: 3, fillColor: color, fillOpacity: 1, interactive: false, pane: 'cursor' }).addTo(this.map);
     } else {
       this.cursor.setLatLng([pt.lat, pt.lon]);
       this.cursor.setStyle({ fillColor: color });
     }
+    // 画面外なら地図を寄せる
+    if (!this.map.getBounds().pad(-0.1).contains([pt.lat, pt.lon])) this.map.panTo([pt.lat, pt.lon], { animate: true, duration: 0.3 });
   }
 
   invalidate() { this.map.invalidateSize(); }

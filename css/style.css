@@ -154,8 +154,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 
 /* ============ 通知 ============ */
 .toast {
-  position: absolute; z-index: 1100; left: 50%; transform: translateX(-50%);
-  bottom: calc(24px + var(--safe-bottom)); max-width: min(560px, calc(100% - 32px));
+  position: absolute; z-index: 2500; left: 50%; transform: translateX(-50%);
+  top: calc(68px + var(--safe-top)); width: max-content; max-width: min(520px, calc(100% - 32px));
   background: var(--text); color: var(--bg); padding: 12px 18px; border-radius: 14px;
   box-shadow: var(--shadow); white-space: pre-line; font-size: 15px;
 }
@@ -328,6 +328,39 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
   .panel-head { padding-top: 0; touch-action: none; }
   .stat-value { font-size: 18px; }
   .brand { font-size: 15px; padding: 10px 12px; }
-  .toast { bottom: 12px; }
   .leaflet-bottom { margin-bottom: 18px; }
+}
+
+/* 標高グラフ */
+.ele { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.ele-title { font-weight: 800; margin-bottom: 8px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip-btn {
+  --c: var(--muted);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14px; cursor: pointer;
+}
+.chip-btn.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.chip-btn.on .day-dot { box-shadow: 0 0 0 2px var(--text); }
+.ele-box { position: relative; padding-top: 30px; }
+.ele-svg { display: block; width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.ele-svg .grid { stroke: var(--line); stroke-width: 1; }
+.ele-svg .axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ele-svg .cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.ele-svg .cross-dot { stroke: var(--surface); stroke-width: 2; }
+.ele-svg .hit { cursor: crosshair; }
+.ele-tip {
+  position: absolute; top: 0; white-space: nowrap; font-size: 13px; padding: 3px 8px; border-radius: 8px;
+  background: var(--text); color: var(--bg); font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.ele-tip[hidden] { display: none; }
+.ele-info { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+/* ダークモードでは地図タイルを暗く(ルートや写真は元の色のまま) */
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.6); }
+  .route-casing { stroke: #1b1d20; }
+  .leaflet-control-attribution { background: rgba(31,34,38,.8) !important; color: var(--muted); }
+  .leaflet-control-attribution a { color: var(--accent); }
+  .leaflet-control-scale-line { background: rgba(31,34,38,.7); color: var(--text); border-color: var(--muted); }
 }
