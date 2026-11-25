@@ -1,5 +1,6 @@
 // 写真の拡大表示(全画面)。左右スワイプ・ボタンで前後の写真へ。
 import { h, fill, fmtDateTime } from './util.js';
+import { placeHeading } from './place-view.js';
 
 export class PhotoViewer {
   constructor({ getTz, onShowOnMap }) {
@@ -75,6 +76,7 @@ export class PhotoViewer {
     const where = p.hasGps ? '位置: 写真のGPS'
       : p.est ? '位置: ルートの時刻から推定' : '位置: 不明(地図に表示できません)';
     fill(this.caption,
+      placeHeading(p, 'viewer-place'),
       h('div', { class: 'viewer-title' }, p.time != null ? fmtDateTime(p.time, tz) : '撮影時刻不明'),
       h('div', { class: 'viewer-sub' + (p.est && !p.hasGps ? ' est' : '') }, where),
       !p.displayable ? h('div', { class: 'viewer-sub' }, 'このブラウザでは元の画像を表示できないため縮小画像を表示しています') : null,
@@ -82,6 +84,11 @@ export class PhotoViewer {
     this.counter.textContent = `${this.i + 1} / ${this.list.length}`;
     this.mapBtn.hidden = !(p.hasGps || p.est);
     this.el.querySelectorAll('.viewer-nav').forEach((b) => { b.hidden = this.list.length < 2; });
+  }
+
+  /** 地名の取得などで情報が変わったときに表示を更新 */
+  refresh() {
+    if (!this.el.hidden) this.render();
   }
 
   showOnMap() {

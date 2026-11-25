@@ -9,6 +9,7 @@ import { estimatePhotos } from './estimate.js';
 import { Panel } from './panel.js';
 import { ElevationChart } from './elevation.js';
 import { Replay } from './replay.js';
+import { PlaceResolver } from './places.js';
 
 const state = {
   tracks: [],
@@ -49,6 +50,21 @@ const replay = new Replay({
   onOpenPhoto: (p) => viewer.open(state.photos, p),
 });
 $('#btn-replay').addEventListener('click', () => replay.start());
+const places = new PlaceResolver({
+  onUpdate: (st) => {
+    const el = $('#place-status');
+    el.hidden = !st.enabled || !st.total;
+    el.textContent = st.running ? `地名を取得中… ${st.done} / ${st.total}` : `地名を取得しました(${st.total}地点)`;
+    // 表示の更新はまとめて行う
+    clearTimeout(placeTimer);
+    placeTimer = setTimeout(() => {
+      panel.update(state);
+      viewer.refresh();
+      replay.refreshCard();
+    }, 300);
+  },
+});
+let placeTimer = null;
 const elevation = new ElevationChart({
   onCursor: (pt, color) => tripMap.setCursor(pt, color),
 });
@@ -74,6 +90,7 @@ function recompute() {
   state.photos.sort((a, b) => (a.time ?? Infinity) - (b.time ?? Infinity));
   state.days = buildDays(state.tracks, state.tz);
   estimatePhotos(state.photos, state.tracks);
+  places.request(state.photos, state.settings.placeNames);
   const colorOf = new Map(state.days.map((d) => [d.key, d.color]));
   for (const p of state.photos) p.color = (p.time != null && colorOf.get(dayKey(p.time, state.tz))) || '#666';
 }
@@ -221,6 +238,13 @@ $('#tz').addEventListener('change', (e) => {
   state.settings.tz = e.target.value;
   saveSettings(state.settings);
   update();
+});
+$('#place-names').checked = !!state.settings.placeNames;
+$('#place-names').addEventListener('change', (e) => {
+  state.settings.placeNames = e.target.checked;
+  saveSettings(state.settings);
+  places.request(state.photos, state.settings.placeNames);
+  panel.update(state);
 });
 $('#shift').value = state.settings.shiftMin;
 $('#shift').addEventListener('change', (e) => {

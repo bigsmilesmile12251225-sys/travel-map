@@ -106,10 +106,23 @@
           <span class="hint">カメラの時計がずれていた場合に。例: 5分遅れていたら 5。</span>
         </label>
       </div>
+      <div class="toggle-row">
+        <label class="toggle">
+          <input id="place-names" type="checkbox" role="switch">
+          <span class="toggle-ui" aria-hidden="true"></span>
+          <span class="toggle-text">撮影地点の地名・施設名を表示</span>
+        </label>
+        <p class="hint">
+          オンにすると、写真の位置(緯度・経度)だけを OpenStreetMap の地名検索サービス(Nominatim)に送って地名を調べます。写真そのものは送りません。
+          混雑を避けるため1秒に1件ずつ取得し、結果はこの端末に保存して再利用します。
+        </p>
+        <p id="place-status" class="hint" hidden></p>
+      </div>
       <div id="check"></div>
       <h3>このアプリについて</h3>
       <p class="hint">
         写真とGPXはこの端末のブラウザ内だけで処理し、外部のサーバーには送信しません(通信するのは地図画像とプログラムの読み込みだけです)。
+        例外として「地名・施設名を表示」をオンにしたときだけ、写真の位置(緯度・経度)を地名検索のために送信します。
         読み込んだデータは保存されないため、ページを再読み込みすると消えます。
         地図データ &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors。
       </p>

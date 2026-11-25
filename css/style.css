@@ -425,3 +425,33 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 @media (prefers-reduced-motion: reduce) {
   .replay-dot, .replay-card.pop, .replay-title, .replay-pin .pin { animation: none; }
 }
+
+/* ============ 地名表示 ============ */
+.toggle-row { margin-top: 16px; padding: 12px 14px; background: var(--surface-2); border-radius: 12px; }
+.toggle-row .hint { margin: 6px 0 0; }
+.toggle { display: flex; align-items: center; gap: 12px; min-height: var(--tap); cursor: pointer; font-weight: 700; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle-ui { position: relative; width: 52px; height: 32px; flex: none; border-radius: 16px; background: var(--line); transition: background .2s; }
+.toggle-ui::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s; }
+.toggle input:checked + .toggle-ui { background: var(--accent); }
+.toggle input:checked + .toggle-ui::after { transform: translateX(20px); }
+.toggle input:focus-visible + .toggle-ui { outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 2px; }
+
+.place-title { font-weight: 900; line-height: 1.25; }
+.place-sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.place-near { font-size: .6em; font-weight: 700; margin-left: 8px; padding: 1px 6px; border-radius: 6px; vertical-align: middle; color: var(--warn); background: var(--warn-bg); border: 1px dashed var(--warn); }
+.loading .place-title { color: var(--muted); font-weight: 600; font-size: 15px; }
+
+/* 再生中の写真カード: 写真の上に大きく */
+.replay-card-place { text-align: left; padding: 6px 8px 2px; }
+.replay-card-place[hidden] { display: none; }
+.replay-place .place-title { font-size: 24px; }
+@media (max-width: 699px) { .replay-place .place-title { font-size: 20px; } }
+
+/* 拡大表示 */
+.viewer-place .place-title { font-size: 22px; }
+.viewer-place .place-sub { color: rgba(255,255,255,.75); }
+.viewer-place { margin-bottom: 4px; }
+
+/* タイムライン */
+.tl-place { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

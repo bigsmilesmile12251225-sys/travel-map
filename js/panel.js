@@ -227,6 +227,7 @@ export class Panel {
               h('span', { class: 'tl-text' },
                 h('span', { class: 'tl-name' }, p.name),
                 tag,
+                p.place ? h('span', { class: 'tl-place' }, '📍 ' + p.place.title + (p.est && !p.hasGps ? ' 付近' : '')) : null,
                 p.est && !p.hasGps ? h('span', { class: 'tl-sub' }, METHOD_LABEL[p.est.method]) : null),
             ),
             h('button', { type: 'button', class: 'btn icon tl-open', 'aria-label': '写真を拡大', onclick: () => this.handlers.onPhotoOpen(p) }, '⤢'),

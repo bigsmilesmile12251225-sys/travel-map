@@ -1,6 +1,7 @@
 // 旅の再生: ルートを時間順にたどり、撮影地点で写真を表示する
 import { h, fill, fmtTime, fmtDate, fmtDist, haversine, dayKey } from './util.js';
 import { photoPos, pinIcon } from './map.js';
+import { placeHeading } from './place-view.js';
 
 const L = window.L;
 
@@ -41,8 +42,9 @@ export class Replay {
       ),
     );
     this.cardImg = h('img', { alt: '' });
+    this.cardPlace = h('div', { class: 'replay-card-place' });
     this.cardCap = h('div', { class: 'replay-card-cap' });
-    this.card = h('button', { type: 'button', class: 'replay-card', hidden: true, onclick: () => this.openCurrentPhoto() }, this.cardImg, this.cardCap);
+    this.card = h('button', { type: 'button', class: 'replay-card', hidden: true, onclick: () => this.openCurrentPhoto() }, this.cardPlace, this.cardImg, this.cardCap);
     this.title = h('div', { class: 'replay-title', hidden: true });
     const area = document.querySelector('.map-area');
     area.append(this.title, this.card, this.bar);
@@ -286,6 +288,7 @@ export class Replay {
       const p = ev.p;
       this.currentPhoto = p;
       this.cardImg.src = p.displayable ? p.fullUrl : (p.thumbUrl || '');
+      this.refreshCard();
       fill(this.cardCap,
         h('span', {}, fmtTime(p.time, this.getState().tz)),
         p.est && !p.hasGps ? h('span', { class: 'tag est' }, '位置は推定') : null,
@@ -310,6 +313,15 @@ export class Replay {
     const m = L.marker(pos, { icon: pinIcon(p, 'replay-pin') }).addTo(this.pinLayer);
     m.on('click', () => { this.pause(); this.onOpenPhoto(p); });
     this.pins.set(p.id, m);
+  }
+
+  /** 写真カードの地名欄を更新(地名は後から届くことがある) */
+  refreshCard() {
+    const p = this.currentPhoto;
+    if (!p) return;
+    const head = placeHeading(p, 'replay-place');
+    fill(this.cardPlace, head);
+    this.cardPlace.hidden = !head;
   }
 
   openCurrentPhoto() {
