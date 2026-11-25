@@ -1,13 +1,14 @@
 // アプリ全体の制御
-import { $, h, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
+import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js';
 import { loadPhotos, computePhotoTime } from './photos.js';
 import { loadGpxFiles, buildDays } from './gpx.js';
 import { renderCheckList } from './check.js';
-import { TripMap } from './map.js';
+import { TripMap, photoPos } from './map.js';
 import { PhotoViewer } from './viewer.js';
 import { estimatePhotos } from './estimate.js';
 import { Panel } from './panel.js';
 import { ElevationChart } from './elevation.js';
+import { Replay } from './replay.js';
 
 const state = {
   tracks: [],
@@ -22,7 +23,14 @@ const tripMap = new TripMap($('#map'), {
 });
 const viewer = new PhotoViewer({
   getTz: () => state.tz,
-  onShowOnMap: (p) => { panel.ensureOpen(); tripMap.focusPhoto(p); panel.reveal(p); },
+  onShowOnMap: (p) => {
+    if (replay.active) { // 再生中は通常のピンを隠しているので、その場所へ移動するだけ
+      const pos = photoPos(p);
+      if (pos) { replay.setFollow(false); tripMap.focusPoint(pos[0], pos[1]); }
+      return;
+    }
+    panel.ensureOpen(); tripMap.focusPhoto(p); panel.reveal(p);
+  },
 });
 const panel = new Panel($('#panel'), {
   onPhoto: (p) => tripMap.focusPhoto(p),
@@ -35,6 +43,12 @@ const panel = new Panel($('#panel'), {
   onResize: () => { tripMap.invalidate(); elevation.redraw(); },
   renderElevation: () => elevation.element(state),
 });
+const replay = new Replay({
+  tripMap,
+  getState: () => state,
+  onOpenPhoto: (p) => viewer.open(state.photos, p),
+});
+$('#btn-replay').addEventListener('click', () => replay.start());
 const elevation = new ElevationChart({
   onCursor: (pt, color) => tripMap.setCursor(pt, color),
 });
@@ -74,6 +88,7 @@ function render({ fit = false } = {}) {
   panel.update(state);
   if (wasHidden !== empty) { panel.setSnap(panel.snap); tripMap.invalidate(); }
   $('#trip-title').textContent = tripTitle();
+  $('#btn-replay').hidden = !Replay.available(state);
   renderLoadedList();
   renderCheckList($('#check'), state.photos, state.tz);
 }
@@ -151,7 +166,7 @@ document.querySelectorAll('input[type=file][data-pick]').forEach((inp) => {
 
 function renderLoadedList() {
   const ul = $('#loaded-list');
-  ul.replaceChildren(
+  fill(ul,
     ...state.tracks.map((t) => h('li', {}, `🗺️ ${t.fileName || t.name}(${t.segments.reduce((s, x) => s + x.length, 0)}点)`)),
     state.photos.length ? h('li', {}, `🖼️ 写真 ${state.photos.length}枚(位置情報あり ${state.photos.filter((p) => p.hasGps).length}枚)`) : null,
   );

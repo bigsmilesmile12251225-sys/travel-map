@@ -20,6 +20,12 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+/** 子要素を入れ替える(null / false は無視。replaceChildren に null を渡すと "null" と表示されるため) */
+export function fill(el, ...children) {
+  el.replaceChildren(...children.flat().filter((c) => c != null && c !== false));
+  return el;
+}
+
 export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

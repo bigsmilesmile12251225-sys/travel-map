@@ -1,6 +1,6 @@
 // 標高グラフ(SVGで描画)。横軸は移動距離、縦軸は標高。
 // グラフをなぞると地図上に現在地のカーソルを表示する。
-import { h, fmtTime, fmtDist, haversine } from './util.js';
+import { h, fill, fmtTime, fmtDist, haversine } from './util.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}) => {
@@ -159,7 +159,7 @@ export class ElevationChart {
     this.dot.setAttribute('fill', p.color);
     this.dot.setAttribute('visibility', 'visible');
     this.tip.hidden = false;
-    this.tip.replaceChildren(
+    fill(this.tip,
       h('strong', {}, `${Math.round(p.ele)} m`),
       h('span', {}, ` ${fmtDist(p.x)}地点`),
       p.pt.t != null ? h('span', {}, ` ・ ${p.day.index + 1}日目 ${fmtTime(p.pt.t, this.tz)}`) : null,

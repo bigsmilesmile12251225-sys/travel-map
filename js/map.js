@@ -65,13 +65,8 @@ export class TripMap {
     for (const p of photos) {
       const pos = photoPos(p);
       if (!pos) continue;
-      const est = !p.hasGps;
       const m = L.marker(pos, {
-        icon: L.divIcon({
-          className: 'pin-wrap',
-          html: `<div class="pin${est ? ' est' : ''}" style="--c:${p.color || '#555'}">${thumbHtml(p)}${est ? '<span class="pin-badge">推定</span>' : ''}</div>`,
-          iconSize: [56, 64], iconAnchor: [28, 62],
-        }),
+        icon: pinIcon(p),
         title: p.name,
         keyboard: true,
       });
@@ -149,6 +144,16 @@ export function photoPos(p) {
   if (p.hasGps) return [p.lat, p.lon];
   if (p.est) return [p.est.lat, p.est.lon];
   return null;
+}
+
+/** 写真ピンのアイコン(推定位置は点線の枠と「推定」バッジ) */
+export function pinIcon(p, extraClass = '') {
+  const est = !p.hasGps;
+  return L.divIcon({
+    className: 'pin-wrap ' + extraClass,
+    html: `<div class="pin${est ? ' est' : ''}" style="--c:${p.color || '#555'}">${thumbHtml(p)}${est ? '<span class="pin-badge">推定</span>' : ''}</div>`,
+    iconSize: [56, 64], iconAnchor: [28, 62],
+  });
 }
 
 function thumbHtml(p) {

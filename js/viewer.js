@@ -1,5 +1,5 @@
 // 写真の拡大表示(全画面)。左右スワイプ・ボタンで前後の写真へ。
-import { h, fmtDateTime } from './util.js';
+import { h, fill, fmtDateTime } from './util.js';
 
 export class PhotoViewer {
   constructor({ getTz, onShowOnMap }) {
@@ -74,7 +74,7 @@ export class PhotoViewer {
     const tz = this.getTz();
     const where = p.hasGps ? '位置: 写真のGPS'
       : p.est ? '位置: ルートの時刻から推定' : '位置: 不明(地図に表示できません)';
-    this.caption.replaceChildren(
+    fill(this.caption,
       h('div', { class: 'viewer-title' }, p.time != null ? fmtDateTime(p.time, tz) : '撮影時刻不明'),
       h('div', { class: 'viewer-sub' + (p.est && !p.hasGps ? ' est' : '') }, where),
       !p.displayable ? h('div', { class: 'viewer-sub' }, 'このブラウザでは元の画像を表示できないため縮小画像を表示しています') : null,
