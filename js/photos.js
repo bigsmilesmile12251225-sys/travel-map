@@ -1,7 +1,7 @@
 // 写真の読み込み: EXIF(位置・撮影時刻)の取得とサムネイル作成
 // すべてブラウザ内で処理し、外部へは送信しない。
 import exifr from 'https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.esm.mjs';
-import { parseOffset, tzOffsetAt } from './util.js?v=202611250937';
+import { parseOffset, tzOffsetAt } from './util.js?v=202611251005';
 
 const EXIF_OPTS = {
   ifd0: true, exif: true, gps: true,

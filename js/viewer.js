@@ -1,9 +1,10 @@
 // 写真の拡大表示(全画面)。左右スワイプ・ボタンで前後の写真へ。
-import { h, fill, fmtDateTime } from './util.js?v=202611250937';
-import { placeHeading } from './place-view.js?v=202611250937';
+import { h, fill, fmtDateTime } from './util.js?v=202611251005';
+import { placeHeading } from './place-view.js?v=202611251005';
 
 export class PhotoViewer {
-  constructor({ getTz, onShowOnMap }) {
+  constructor({ getTz, onShowOnMap, onEditPlace }) {
+    this.onEditPlace = onEditPlace;
     this.getTz = getTz;
     this.onShowOnMap = onShowOnMap;
     this.list = [];
@@ -22,7 +23,10 @@ export class PhotoViewer {
         h('button', { class: 'btn icon viewer-nav prev', type: 'button', 'aria-label': '前の写真', onclick: () => this.go(-1) }, '‹'),
         h('button', { class: 'btn icon viewer-nav next', type: 'button', 'aria-label': '次の写真', onclick: () => this.go(1) }, '›'),
       ),
-      h('div', { class: 'viewer-bottom' }, this.caption, this.mapBtn),
+      h('div', { class: 'viewer-bottom' }, this.caption,
+        h('div', { class: 'viewer-actions' },
+          h('button', { class: 'btn', type: 'button', onclick: () => this.onEditPlace && this.onEditPlace(this.list[this.i]) }, '✎ 地名'),
+          this.mapBtn)),
     );
     document.body.append(this.el);
 

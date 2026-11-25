@@ -1,7 +1,7 @@
 // 撮影地点の地名・施設名の取得(設定でオンにしたときだけ)
 // OpenStreetMap の Nominatim に「緯度・経度」だけを送る。写真そのものは送らない。
 // 利用規約に従い、1秒に1件まで・結果はこの端末に保存して再利用する。
-import { photoPos } from './map.js?v=202611250937';
+import { photoPos } from './map.js?v=202611251005';
 
 const ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
 const INTERVAL = 1100;
@@ -9,7 +9,7 @@ const CACHE_KEY = 'travel-map-places-v2'; // v1 は失敗も保存していた�
 const CACHE_MAX = 3000;
 
 // 約10m単位にまとめて、近い写真では同じ結果を使う
-const keyOf = (lat, lon) => `${lat.toFixed(4)},${lon.toFixed(4)}`;
+export const keyOf = (lat, lon) => `${lat.toFixed(4)},${lon.toFixed(4)}`;
 
 let cache = new Map();
 try {

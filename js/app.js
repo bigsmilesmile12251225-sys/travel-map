@@ -1,15 +1,16 @@
 // アプリ全体の制御
-import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611250937';
-import { loadPhotos, computePhotoTime } from './photos.js?v=202611250937';
-import { loadGpxFiles, buildDays } from './gpx.js?v=202611250937';
-import { renderCheckList } from './check.js?v=202611250937';
-import { TripMap, photoPos } from './map.js?v=202611250937';
-import { PhotoViewer } from './viewer.js?v=202611250937';
-import { estimatePhotos } from './estimate.js?v=202611250937';
-import { Panel } from './panel.js?v=202611250937';
-import { ElevationChart } from './elevation.js?v=202611250937';
-import { Replay } from './replay.js?v=202611250937';
-import { PlaceResolver } from './places.js?v=202611250937';
+import { $, h, fill, dayKey, fmtDate, fmtOffset, fmtDist, loadSettings, saveSettings } from './util.js?v=202611251005';
+import { loadPhotos, computePhotoTime } from './photos.js?v=202611251005';
+import { loadGpxFiles, buildDays } from './gpx.js?v=202611251005';
+import { renderCheckList } from './check.js?v=202611251005';
+import { TripMap, photoPos } from './map.js?v=202611251005';
+import { PhotoViewer } from './viewer.js?v=202611251005';
+import { estimatePhotos } from './estimate.js?v=202611251005';
+import { Panel } from './panel.js?v=202611251005';
+import { ElevationChart } from './elevation.js?v=202611251005';
+import { Replay } from './replay.js?v=202611251005';
+import { PlaceEditor, applyOverrides } from './place-edit.js?v=202611251005';
+import { PlaceResolver } from './places.js?v=202611251005';
 
 const state = {
   tracks: [],
@@ -24,6 +25,7 @@ const tripMap = new TripMap($('#map'), {
 });
 const viewer = new PhotoViewer({
   getTz: () => state.tz,
+  onEditPlace: (p) => placeEditor.open(p),
   onShowOnMap: (p) => {
     if (replay.active) { // 再生中は通常のピンを隠しているので、その場所へ移動するだけ
       const pos = photoPos(p);
@@ -75,6 +77,15 @@ const places = new PlaceResolver({
   },
 });
 let placeTimer = null;
+const placeEditor = new PlaceEditor({
+  getPhotos: () => state.photos,
+  onChange: () => {
+    applyOverrides(state.photos);
+    panel.update(state);
+    viewer.refresh();
+    replay.refreshCard();
+  },
+});
 const elevation = new ElevationChart({
   onCursor: (pt, color) => tripMap.setCursor(pt, color),
 });
@@ -101,6 +112,7 @@ function recompute() {
   state.days = buildDays(state.tracks, state.tz);
   estimatePhotos(state.photos, state.tracks);
   places.request(state.photos, state.settings.placeNames);
+  applyOverrides(state.photos);
   const colorOf = new Map(state.days.map((d) => [d.key, d.color]));
   for (const p of state.photos) p.color = (p.time != null && colorOf.get(dayKey(p.time, state.tz))) || '#666';
 }

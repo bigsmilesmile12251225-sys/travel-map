@@ -459,3 +459,17 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 
 #place-status.ng { color: var(--ng); font-weight: 700; }
 #place-retry { margin-top: 8px; }
+
+/* ============ 地名の修正 ============ */
+.viewer-actions { display: flex; gap: 8px; flex: none; }
+dialog.place-dialog { z-index: 4000; }
+.form-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 14px; color: var(--muted); }
+.form-row .field { width: 100%; color: var(--text); font-size: 17px; }
+.form-label { font-size: 14px; color: var(--muted); margin: 4px 0 6px; }
+.scope { display: grid; gap: 6px; margin-bottom: 12px; }
+.radio { display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 0 12px; border-radius: 12px; background: var(--surface-2); cursor: pointer; font-weight: 600; }
+.radio input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
+.form-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.form-actions .btn.primary { min-width: 120px; }
+@media (max-width: 480px) { .viewer-bottom { flex-wrap: wrap; } }
+.form-actions .btn.primary { margin-left: auto; }

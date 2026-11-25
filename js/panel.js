@@ -1,7 +1,8 @@
 // 横(iPad)/下(iPhone)のパネル: サマリーとタイムライン
-import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611250937';
-import { photoPos } from './map.js?v=202611250937';
-import { METHOD_LABEL } from './estimate.js?v=202611250937';
+import { h, fmtTime, fmtDate, fmtDist, fmtDuration, dayKey } from './util.js?v=202611251005';
+import { photoPos } from './map.js?v=202611251005';
+import { placeOf } from './place-edit.js?v=202611251005';
+import { METHOD_LABEL } from './estimate.js?v=202611251005';
 
 /** 'YYYY-MM-DD' → '10/1(木)' */
 function keyLabel(key) {
@@ -227,7 +228,7 @@ export class Panel {
               h('span', { class: 'tl-text' },
                 h('span', { class: 'tl-name' }, p.name),
                 tag,
-                p.place ? h('span', { class: 'tl-place' }, '📍 ' + p.place.title + (p.est && !p.hasGps ? ' 付近' : '')) : null,
+                placeOf(p) ? h('span', { class: 'tl-place' }, '📍 ' + placeOf(p).title + (!p.placeManual && p.est && !p.hasGps ? ' 付近' : '')) : null,
                 p.est && !p.hasGps ? h('span', { class: 'tl-sub' }, METHOD_LABEL[p.est.method]) : null),
             ),
             h('button', { type: 'button', class: 'btn icon tl-open', 'aria-label': '写真を拡大', onclick: () => this.handlers.onPhotoOpen(p) }, '⤢'),
